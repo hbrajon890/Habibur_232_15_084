@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tender Document Package Builder - AI DevFest 2026</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- PDF.js CDN for reading/page counting and rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  
+  <!-- PDF-LIB CDN for PDF manipulation, page extraction, cover generation, footers -->
+  <script src="https://unpkg.com/pdf-lib@1.17.9/dist/pdf-lib.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation & Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-section">
+        <div class="brand-icon">📁</div>
+        <div class="brand-title">
+          <h1 data-i18n="appTitle">Tender Document Package Builder</h1>
+          <p class="brand-subtitle" data-i18n="appSubtitle">AI DevFest 2026 Submission Packaging System</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <span class="security-badge">
+          <span>🔒</span> <span data-i18n="badgeSecure">100% In-Browser & Secure</span>
+        </span>
+
+        <!-- Language Switcher -->
+        <button id="lang-toggle" class="lang-toggle-btn" title="Switch Language / ভাষা পরিবর্তন">
+          🌐 <span id="current-lang-text">English | বাংলা</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- 1. Tender Information Section -->
+    <section class="dashboard-card" id="tender-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-title-icon">📋</span>
+          <h2 data-i18n="tenderDetails">Tender Details</h2>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <input type="file" id="requirements-file-input" accept=".json" style="display: none;">
+          <button id="btn-load-requirements" class="btn btn-secondary">
+            <span>📥</span> <span data-i18n="loadRequirements">Load Requirements.json</span>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="tender-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label" data-i18n="tenderId">Tender ID</span>
+            <span class="meta-value meta-highlight" id="meta-tender-id">--</span>
+          </div>
+          <div class="meta-item" style="grid-column: span 2;">
+            <span class="meta-label" data-i18n="tenderTitle">Tender Title</span>
+            <span class="meta-value" id="meta-tender-title">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label" data-i18n="procuringEntity">Procuring Entity</span>
+            <span class="meta-value" id="meta-procuring-entity">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label" data-i18n="bidder">Bidder</span>
+            <span class="meta-value" id="meta-bidder">--</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label" data-i18n="submissionDeadline">Submission Deadline</span>
+            <span class="meta-value meta-highlight" id="meta-submission-deadline">--</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PDF Upload Section -->
+    <section class="dashboard-card" id="upload-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-title-icon">📤</span>
+          <h2 data-i18n="uploadTitle">Upload Tender Documents (PDF)</h2>
+        </div>
+        <button id="btn-clear-all" class="btn btn-secondary" style="display: none;">
+          <span>🗑️</span> <span data-i18n="clearAllUploads">Clear All</span>
+        </button>
+      </div>
+      <div class="card-body">
+        <!-- Drag & Drop Zone -->
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-icon">📄</div>
+          <div class="dropzone-text">
+            <h3 data-i18n="uploadInstruction">Drag & drop PDF files here, or click Browse</h3>
+            <p data-i18n="uploadLimits">Max 30 files • Max 50 MB total • Only .pdf accepted</p>
+          </div>
+          <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" multiple style="display: none;">
+          <button type="button" class="btn btn-primary" id="btn-browse-trigger">
+            <span>📁</span> <span data-i18n="browseFiles">Browse Files</span>
+          </button>
+        </div>
+
+        <!-- Upload Stats Bar -->
+        <div class="upload-stats-bar" id="upload-stats-bar">
+          <div>
+            <span data-i18n="uploadedFilesSummary">Uploaded PDFs</span>: 
+            <strong id="stat-file-count">0 / 30</strong>
+          </div>
+          <div class="progress-container">
+            <span data-i18n="totalSize">Total Size</span>: 
+            <strong id="stat-total-size">0.00 MB / 50 MB</strong>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="size-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Uploaded Files List -->
+        <div class="uploaded-files-list" id="uploaded-files-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Document Checklist & Matching Table -->
+    <section class="dashboard-card" id="checklist-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title-group">
+            <span class="card-title-icon">✅</span>
+            <h2 data-i18n="checklistTitle">Document Requirements Checklist</h2>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;" data-i18n="checklistDesc">
+            Match uploaded PDFs to required tender documents and verify validity.
+          </p>
+        </div>
+        <div>
+          <button id="btn-auto-match" class="btn btn-secondary">
+            <span>✨</span> <span data-i18n="autoMatchAllBtn">Auto-Match by Filename</span>
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="checklist-container">
+          <table class="checklist-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;" data-i18n="colOrder">#</th>
+                <th data-i18n="colDocName">Document Requirement</th>
+                <th style="width: 110px;" data-i18n="colMandatory">Type</th>
+                <th style="min-width: 240px;" data-i18n="colMatchedFile">Matched File</th>
+                <th style="width: 80px;" data-i18n="colPages">Pages</th>
+                <th style="width: 170px;" data-i18n="colExpiryDate">Expiry Date</th>
+                <th style="width: 160px;" data-i18n="colStatus">Status</th>
+                <th style="width: 90px;" data-i18n="colChecklistActions">Action</th>
+              </tr>
+            </thead>
+            <tbody id="checklist-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Package Generation & Download Section -->
+    <section class="dashboard-card generator-card" id="generator-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-title-icon">📦</span>
+          <h2 data-i18n="generatorTitle">Package Generation</h2>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <!-- Blocking or Ready Status Banner -->
+        <div id="blocking-banner-container">
+          <!-- Dynamically populated with .blocking-alert-box or .ready-alert-box -->
+        </div>
+
+        <!-- Package Specifications Box -->
+        <div class="generator-summary-box">
+          <div class="summary-spec-list">
+            <div class="summary-spec-item">
+              <span data-i18n="packageFileName">Output File:</span>
+              <strong id="spec-filename">T-Package.pdf</strong>
+            </div>
+            <div class="summary-spec-item">
+              <span data-i18n="totalDocumentsToInclude">Documents to include:</span>
+              <strong id="spec-doc-count">0</strong>
+            </div>
+            <div class="summary-spec-item">
+              <span data-i18n="estimatedPages">Estimated Total Pages:</span>
+              <strong id="spec-total-pages">0</strong>
+            </div>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.2rem;">
+            <div>ℹ️ <span data-i18n="coverPageIncluded">Cover Page Included (with Tender Metadata & Document Index)</span></div>
+            <div>ℹ️ <span data-i18n="footerIncluded">Sequential Footer will be added on every page: &lt;tender_id&gt; | Page X of Y</span></div>
+          </div>
+        </div>
+
+        <!-- Generation Controls -->
+        <div class="generation-action-area">
+          <label class="bonus-toggle-label">
+            <input type="checkbox" id="chk-include-toc" checked>
+            <span data-i18n="includeTocLabel">Include Table of Contents / Index Page (Bonus Feature)</span>
+          </label>
+
+          <button id="btn-generate-package" class="btn btn-primary btn-large" disabled>
+            <span>🚀</span> <span id="btn-generate-label" data-i18n="generateBtn">Generate & Download Final Package</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Page Footer -->
+  <footer class="page-footer">
+    <p data-i18n="privacyNotice">Client-Side Guarantee: All PDFs are parsed, hashed, and merged strictly inside your browser memory using WebCrypto and pdf-lib. No data leaves your machine.</p>
+  </footer>
+
+  <!-- Modal for Document Preview -->
+  <div class="modal-overlay" id="preview-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="preview-modal-title" data-i18n="previewModalTitle">PDF Document Preview</h3>
+        <button class="modal-close-btn" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="preview-modal-body">
+        <iframe id="preview-iframe" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="translations.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
